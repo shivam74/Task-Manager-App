@@ -2,6 +2,12 @@
 
 A production-ready Full Stack Task Management System built with React, Node.js, Express, MongoDB, and Socket.IO.
 
+## Live Demo
+
+* **Frontend:** [https://task-manager-app-inky-kappa.vercel.app/](https://task-manager-app-inky-kappa.vercel.app/)
+* **Backend API:** [http://16.170.247.206:5000](http://16.170.247.206:5000)
+* **Swagger API Docs:** [http://16.170.247.206:5000/api-docs](http://16.170.247.206:5000/api-docs)
+
 ## Features
 
 * **Authentication & Authorization:** JWT-based auth with Role-Based Access Control (Admin/User).
