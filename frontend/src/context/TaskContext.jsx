@@ -60,14 +60,10 @@ export const TaskProvider = ({ children }) => {
   };
 
   const uploadFile = async (taskId, file) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post(`/files/${taskId}`, formData, {
-          headers: {
-              'Content-Type': 'multipart/form-data'
-          }
-      });
-      return res.data.data;
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post(`/files/${taskId}`, formData);
+    return res.data.data;
   };
 
   return (

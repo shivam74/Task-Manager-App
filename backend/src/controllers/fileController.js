@@ -1,9 +1,13 @@
 const asyncHandler = require('express-async-handler');
-const { uploadFile, getObjectSignedUrl, deleteFile } = require('../utils/s3');
+const { uploadFile, getObjectSignedUrl, deleteFile, mapAwsError } = require('../utils/s3');
 const Task = require('../models/Task');
 const crypto = require('crypto');
 const path = require('path');
 const { canModifyTask, canAccessTask } = require('../utils/taskPermissions');
+
+function documentCount(task) {
+  return (task.attachedDocuments && task.attachedDocuments.length) || 0;
+}
 
 exports.uploadTaskFile = asyncHandler(async (req, res, next) => {
   if (!req.file) {
@@ -20,14 +24,14 @@ exports.uploadTaskFile = asyncHandler(async (req, res, next) => {
     return res.status(403).json({ success: false, error: 'Forbidden — not allowed to upload to this task' });
   }
 
-  if (task.attachedDocuments.length >= 3) {
+  if (documentCount(task) >= 3) {
     return res.status(400).json({ success: false, error: 'Maximum of 3 files allowed per task' });
   }
 
   const file = req.file;
   const generateFileName = (bytes = 32) => crypto.randomBytes(bytes).toString('hex');
-  const fileName = generateFileName() + path.extname(file.originalname);
-
+  const ext = path.extname(file.originalname || '') || '.pdf';
+  const fileName = generateFileName() + ext;
   const s3Key = `tasks/${req.params.taskId}/${fileName}`;
 
   try {
@@ -40,6 +44,9 @@ exports.uploadTaskFile = asyncHandler(async (req, res, next) => {
       url,
     };
 
+    if (!task.attachedDocuments) {
+      task.attachedDocuments = [];
+    }
     task.attachedDocuments.push(newDoc);
     await task.save();
 
@@ -48,8 +55,11 @@ exports.uploadTaskFile = asyncHandler(async (req, res, next) => {
       data: newDoc,
     });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, error: 'File upload failed' });
+    console.error('S3 upload error:', err);
+    return res.status(500).json({
+      success: false,
+      error: mapAwsError(err),
+    });
   }
 });
 
@@ -81,7 +91,8 @@ exports.getFileUrl = asyncHandler(async (req, res, next) => {
       data: url,
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: 'Could not generate URL' });
+    console.error('S3 signed URL error:', err);
+    return res.status(500).json({ success: false, error: mapAwsError(err) });
   }
 });
 
@@ -112,6 +123,7 @@ exports.deleteTaskFile = asyncHandler(async (req, res, next) => {
       data: {},
     });
   } catch (err) {
-    return res.status(500).json({ success: false, error: 'Could not delete file' });
+    console.error('S3 delete error:', err);
+    return res.status(500).json({ success: false, error: mapAwsError(err) });
   }
 });

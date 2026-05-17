@@ -45,6 +45,7 @@ const taskSchema = new mongoose.Schema(
     },
     attachedDocuments: {
       type: [documentSchema],
+      default: [],
       validate: [arrayLimit, '{PATH} exceeds the limit of 3'],
     },
   },

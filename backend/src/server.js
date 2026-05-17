@@ -1,8 +1,9 @@
+require('dotenv').config();
 const http = require('http');
 const app = require('./app');
 const connectDB = require('./config/db');
 const { initSockets } = require('./sockets');
-require('dotenv').config();
+const { isS3Configured, getS3Config } = require('./utils/s3');
 
 // Connect to database
 connectDB();
@@ -16,6 +17,12 @@ initSockets(server);
 
 server.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  if (isS3Configured()) {
+    const { region, bucket } = getS3Config();
+    console.log(`File storage: AWS S3 (bucket: ${bucket}, region: ${region})`);
+  } else {
+    console.warn('WARNING: AWS S3 env vars missing — PDF uploads will fail until configured.');
+  }
 });
 
 // Handle unhandled promise rejections

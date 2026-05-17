@@ -110,11 +110,16 @@ const TaskForm = ({
       if (!payload.assignedTo) delete payload.assignedTo;
 
       const createdTask = await onSubmit(payload);
+      const taskId = createdTask?._id || initialData?._id;
 
-      if (file && createdTask && createdTask._id) {
-        await onUpload(createdTask._id, file);
-      } else if (file && initialData && initialData._id) {
-        await onUpload(initialData._id, file);
+      if (file && taskId) {
+        try {
+          await onUpload(taskId, file);
+        } catch (uploadErr) {
+          toast.error(uploadErr.response?.data?.error || 'PDF upload to S3 failed');
+          setLoading(false);
+          return;
+        }
       }
 
       toast.success(`Task ${initialData ? 'updated' : 'created'} successfully`);

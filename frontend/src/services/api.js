@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api', // Works because we will proxy or via docker
+  baseURL: import.meta.env.VITE_API_URL,// Works because we will proxy or via docker
 });
 
 api.interceptors.request.use((config) => {
